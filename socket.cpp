@@ -8,6 +8,8 @@
 #include "epoll_agent.h"
 #include <coroutine>
 #include <iostream>
+#include <sys/timerfd.h>
+#include <sys/time.h>
 
 void SetNonBlock(int fd) {
     int fl = fcntl(fd, F_GETFL); //文件描述符的属性取出来存入fl中
@@ -25,7 +27,7 @@ Socket::~Socket() {
     close(sockfd);
 }
 
-Socket::Socket(std::string port,EpollAgent* agent):agent(agent),IOState(0) {
+Socket::Socket(std::string port,EpollAgent* agent):agent(agent),IOState(0),parser(agent),isclose(false) {
     socklen = sizeof(struct sockaddr);
     memset(&sin, 0, socklen);
     sin.sin_family      = AF_INET;
@@ -59,14 +61,17 @@ Socket::Socket(std::string port,EpollAgent* agent):agent(agent),IOState(0) {
         close(sockfd);
         exit(1); 
     }
+    std::cout << "fd:" << sockfd << " construct!" << std::endl;
     agent->Attch(this);
     agent->WatchRead(this);
 }
 
 
-Socket::Socket(int fd,EpollAgent* agent):agent(agent),sockfd(fd),IOState(0) { 
+Socket::Socket(int fd,EpollAgent* agent):agent(agent),sockfd(fd),IOState(0),parser(agent),isclose(false) { 
     SetNonBlock(fd);
     agent->Attch(this);
+    agent->WatchRead(this);
+    std::cout << "fd:" << fd << " construct!" << std::endl;
 }
 
 
@@ -88,24 +93,56 @@ SocketWriteOperation Socket::write(void* buffer ,std::size_t len) {
     return SocketWriteOperation((char*)buffer,this,len);
 }
 
+
+SocketTimerOperation Socket::read() {
+    return SocketTimerOperation(this);
+}
+
+
 task<bool> Socket::loop() {
+    // int timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+    // if (timerfd == -1)
+    // {
+    //     perror("timerfd_create");
+    // }
+
+    // struct itimerspec new_value = {};
+    // new_value.it_value.tv_sec  = 1; // 第一次1s到期
+    // new_value.it_value.tv_nsec = 0;
+
+    // new_value.it_interval.tv_sec  = 5; // 后续周期是5s cycle
+    // new_value.it_interval.tv_nsec = 0;
+
+    // if (timerfd_settime(timerfd, 0, &new_value, NULL) == -1)
+    // {
+    //     perror("timerfd_settime");
+    // }
+    // Socket s(timerfd,agent);
+    // co_await s.read();
+    // std::cout << "timer end" << std::endl;
+    // co_return true;
     ssize_t bRecv = 0;
     ssize_t bSend = 0;
     while (bRecv >= 0) {
         char buffer[1024] = {0};
         bRecv = co_await recv(buffer,sizeof buffer);
         if (bRecv > 0) {
-            auto ret = parser.Execute(buffer,bRecv);
+            auto ret = co_await parser.Execute(buffer,bRecv);
             if(ret.first != nullptr) {
                 while (bSend < ret.first->GetLen()- ret.first->GetWritePos()) {
                     ssize_t res = co_await write((void*)(ret.first->GetData()+ret.first->GetWritePos()),ret.first->GetLen()-ret.first->GetWritePos());
                     if(res < 0) {
+                        std::cout << "false1\n";
                         co_return false;
                     }
                     ret.first->SetHasWrite(res);
                 }
-                co_return true;
+                isclose = true;
+                std::cout << "flase2\n";
+                co_return false;
             }
         }
     }
+    std::cout << "false3\n";
+    co_return false;
 }

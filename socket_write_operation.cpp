@@ -7,16 +7,16 @@
 #include <iostream>
 
 SocketWriteOperation::SocketWriteOperation(void* buffer,Socket* s,int len):len(len),buffer(buffer),socket(s) {
-    // s->agent->WatchWrite(s);
+    s->agent->WatchWrite(s);
 }
 
 SocketWriteOperation::~SocketWriteOperation() {
-    // socket->agent->UnWatchWrite(socket);
+    socket->agent->UnWatchWrite(socket);
 }
 
 
 int SocketWriteOperation::syscall() {
-    // std::cout << "send" << std::endl;
+    std::cout << "write" << std::endl;
     return send(socket->sockfd,(buffer),len,0);
 }
 

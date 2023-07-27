@@ -17,7 +17,7 @@ SocketRecvOperation::~SocketRecvOperation() {
 
 
 int SocketRecvOperation::syscall() {
-    // std::cout << "recv" << std::endl;
+    std::cout << "recv" << std::endl;
     return recv(socket->sockfd,(buffer),len,0);
 }
 

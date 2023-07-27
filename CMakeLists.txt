@@ -11,12 +11,17 @@ message("-- CMAKE_C_COMPILER_VERSION: ${CMAKE_C_COMPILER_VERSION}")
 # 当前使用的c++编译器的版本
 message("-- CMAKE_CXX_COMPILER_VERSION: ${CMAKE_CXX_COMPILER_VERSION}")
 
-set (CMAKE_CXX_FLAGS "-Werror")
+# set (CMAKE_CXX_FLAGS "-Werror")
 
-set (CMAKE_CXX_FLAGS "-g")
+# set (CMAKE_CXX_FLAGS "-g")
 
-set (CMAKE_CXX_FLAGS "-fcoroutines")
+# set (CMAKE_CXX_FLAGS "-fcoroutines")
 
+add_compile_options(-Werror)
+
+add_compile_options(-g)
+
+add_compile_options(-fcoroutines)
 
 add_subdirectory(jsoncpp)
 include_directories(jsoncpp/include)
@@ -34,6 +39,6 @@ if(NOT HTTP_PARSER_LIB)
     message(FATAL_ERROR "Cannot find http_parser library")
 endif()
 
-add_executable(server message.cpp parse.cpp socket.cpp socket_accept_operation.cpp socket_recv_operation.cpp socket_write_operation.cpp epoll_agent.cpp main.cpp)   
+add_executable(server message.cpp parse.cpp socket.cpp socket_accept_operation.cpp socket_recv_operation.cpp socket_write_operation.cpp socket_timer_operation.cpp epoll_agent.cpp main.cpp)   
 # Link with the llhttp_static target
 target_link_libraries(server ${HTTP_PARSER_LIB} jsoncpp)

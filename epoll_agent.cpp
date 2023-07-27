@@ -67,7 +67,7 @@ void EpollAgent::Detach(Socket* s) {
 
 
 void EpollAgent::Run() {
-        struct epoll_event ev, events[10240];
+        struct epoll_event ev, events[1024];
     for (;;)
     {
         auto nfds = epoll_wait(Epollfd, events, 1024, -1);
@@ -79,11 +79,14 @@ void EpollAgent::Run() {
         for (int n = 0; n < nfds; ++n)
         {
             auto socket = static_cast<Socket*>(events[n].data.ptr); 
-
-            if (events[n].events & EPOLLIN)
-                socket->resumeRecv(); // 如果是accpet 
+            if (events[n].events & EPOLLERR) {
+                std::cout << "epoll error!" << std::endl;
+                continue;
+            }
             if (events[n].events & EPOLLOUT)
                 socket->resumeSend();
+            if (events[n].events & EPOLLIN)
+                socket->resumeRecv(); 
         }
         for (auto* iter : processSocket)
         {
