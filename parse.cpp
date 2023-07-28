@@ -133,10 +133,10 @@ task<std::pair<std::shared_ptr<Message>,int>> Parser::Execute(const char* data,i
         } else if(ret == 0) {
             std::cout << "connect success!" << std::endl;
         }
-        Socket writeS(sockfd,agent);
+        Socket* writeS = new Socket(sockfd,agent);
         size_t bSend = 0;
         while(message->GetLen()- message->GetWritePos() > 0) {
-            ssize_t res = co_await writeS.write((void*)(message->GetData()+message->GetWritePos()),message->GetLen()-message->GetWritePos());
+            ssize_t res = co_await writeS->write((void*)(message->GetData()+message->GetWritePos()),message->GetLen()-message->GetWritePos());
             if(res < 0) {
                 std::cout << "parse not get sendmessage error!" << std::endl;
                 co_return {nullptr,-1};
@@ -150,7 +150,7 @@ task<std::pair<std::shared_ptr<Message>,int>> Parser::Execute(const char* data,i
         while(bRecv > 0 && recvStr.size() < ContentLength) {
             char buffer[1024] = {0};
             std::cout << "start to co_await recv" << std::endl;
-            bRecv = co_await writeS.recv(buffer,sizeof buffer);
+            bRecv = co_await writeS->recv(buffer,sizeof buffer);
             std::cout << "recv:" << bRecv << std::endl;
             recvStr += std::string(buffer,bRecv);
         }

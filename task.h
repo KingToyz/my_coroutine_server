@@ -1,5 +1,6 @@
 #pragma once
 #include <coroutine>
+#include <iostream>
 
 template<class T> struct task;
 namespace mytask {
@@ -58,7 +59,8 @@ struct task {
       : handle_{handle}
     {}
     ~task() {
-        handle_.destroy();
+        // std::cout << "handle_ destory" << std::endl;
+        // handle_.destroy();
     }
     T await_resume();
     void await_suspend(std::coroutine_handle<> waiter) {

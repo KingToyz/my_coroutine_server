@@ -75,13 +75,13 @@ Socket::Socket(int fd,EpollAgent* agent):agent(agent),sockfd(fd),IOState(0),pars
 }
 
 
-task<std::shared_ptr<Socket>> Socket::accept() {
+task<Socket*> Socket::accept() {
     int fd = co_await SocketAccpetOperation(this);
     if(fd == -1) {
         std::cout << "accpet error" << std::endl;
         exit(-1);
     }
-    co_return std::make_shared<Socket>(fd,agent);
+    co_return new Socket(fd,agent);
 }
 
 SocketRecvOperation Socket::recv(void* buffer, std::size_t len) {
@@ -100,27 +100,7 @@ SocketTimerOperation Socket::read() {
 
 
 task<bool> Socket::loop() {
-    // int timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
-    // if (timerfd == -1)
-    // {
-    //     perror("timerfd_create");
-    // }
 
-    // struct itimerspec new_value = {};
-    // new_value.it_value.tv_sec  = 1; // 第一次1s到期
-    // new_value.it_value.tv_nsec = 0;
-
-    // new_value.it_interval.tv_sec  = 5; // 后续周期是5s cycle
-    // new_value.it_interval.tv_nsec = 0;
-
-    // if (timerfd_settime(timerfd, 0, &new_value, NULL) == -1)
-    // {
-    //     perror("timerfd_settime");
-    // }
-    // Socket s(timerfd,agent);
-    // co_await s.read();
-    // std::cout << "timer end" << std::endl;
-    // co_return true;
     ssize_t bRecv = 0;
     ssize_t bSend = 0;
     while (bRecv >= 0) {
@@ -138,7 +118,7 @@ task<bool> Socket::loop() {
                     ret.first->SetHasWrite(res);
                 }
                 isclose = true;
-                std::cout << "flase2\n";
+                std::cout << "false2\n";
                 co_return false;
             }
         }

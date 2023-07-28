@@ -45,7 +45,7 @@ class Socket {
         int NewIOState;
         Parser parser;
 
-        task<std::shared_ptr<Socket>> accept();
+        task<Socket*> accept();
 
         SocketRecvOperation recv(void* buffer, std::size_t len);
         SocketWriteOperation write(void* buffer, std::size_t len);
